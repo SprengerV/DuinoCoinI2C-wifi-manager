@@ -45,10 +45,11 @@ void UpdatePool()
   else
   {
     // AVR_Miner 2.64 uses this address
-    const char* ip = "51.158.182.90";
-    int port = 6000;
-    Serial.println("[ ]Update " + String(ip) + " " + String(port));
-    SetHostPort(String(ip), port);
+    const char* hardcode_ip = "51.158.182.90";
+    int hardcode_port = 6000;
+    Serial.println("[ ]Update " + String(hardcode_ip) + " " + String(hardcode_port));
+    SetHostPort(String(hardcode_ip), hardcode_port);
+    return;
   }
   
   UpdateHostPort(input);
