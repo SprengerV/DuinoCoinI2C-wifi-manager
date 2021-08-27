@@ -201,7 +201,7 @@ void clients_requestJob(byte i)
 {
   Serial.print("[" + String(i) + "]");
   Serial.println("Job Request: " + String(ducouser));
-  clients[i].print("JOB," + String(ducouser) + "," + JOB);
+  clients[i].print("JOBAVR," + String(ducouser) + "," + JOB);
   clients_state(i, DUINO_STATE_JOB_WAIT);
 }
 
