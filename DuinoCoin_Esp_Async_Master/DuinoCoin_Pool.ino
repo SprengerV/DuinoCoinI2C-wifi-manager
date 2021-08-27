@@ -2,7 +2,11 @@
   DuinoCoin_Pool.ino
   created 31 07 2021
   by Luiz H. Cassettari
+  
+  Modified by JK-Rolling
 */
+
+#define GETPOOL_EN true
 
 #if ESP8266
 #include <ESP8266HTTPClient.h>
@@ -32,8 +36,21 @@ void UpdateHostPort(String input)
 
 void UpdatePool()
 {
-  String input = httpGetString(urlPool);
-  if (input == "") return;
+  String input;
+  if (GETPOOL_EN)
+  {
+    input = httpGetString(urlPool);
+    if (input == "") return;
+  }
+  else
+  {
+    // AVR_Miner 2.64 uses this address
+    const char* ip = "51.158.182.90";
+    int port = 6000;
+    Serial.println("[ ]Update " + String(ip) + " " + String(port));
+    SetHostPort(String(ip), port);
+  }
+  
   UpdateHostPort(input);
 }
 
