@@ -15,6 +15,7 @@
 #endif
 
 #define CLIENTS 10
+#define SLAVE_BINARY_RESPONSE true
 
 #define CLIENT_CONNECT_EVERY 30000
 #define CLIENT_TIMEOUT_CONNECTION 30000
@@ -233,6 +234,22 @@ void clients_waitRequestJob(byte i)
   }
 }
 
+long int str_binary2decimal(String &binary_str)
+{
+    // convert binary string into decimal
+    long int time = 0;
+    long int square = 1;
+    for (int j = binary_str.length()-1; j >= 0 ; j--)
+    {
+        if (binary_str[j] == '1')
+        {
+            time += square;
+        }
+        square *= 2;
+    }
+    return time;
+}
+
 void clients_sendJobDone(byte i)
 {
   String responseJob = wire_readLine(i + 1);
@@ -243,8 +260,20 @@ void clients_sendJobDone(byte i)
     StreamString response;
     response.print(responseJob);
 
-    int job = response.readStringUntil(',').toInt();
-    int time = response.readStringUntil(',').toInt();
+    int time;
+    int job;
+    if (SLAVE_BINARY_RESPONSE)
+    {
+      String job_bin = response.readStringUntil(',');
+      String time_bin = response.readStringUntil(',');
+      job = str_binary2decimal(job_bin);
+      time = str_binary2decimal(time_bin);
+    }
+    else
+    {
+      job = response.readStringUntil(',').toInt();
+      time = response.readStringUntil(',').toInt();
+    }
     String id = response.readStringUntil('\n');
     float HashRate = job / (time * .000001f);
 
