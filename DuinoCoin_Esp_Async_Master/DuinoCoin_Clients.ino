@@ -262,10 +262,12 @@ void clients_sendJobDone(byte i)
 
     int time;
     int job;
+    String job_bin;
+    String time_bin;
     if (SLAVE_BINARY_RESPONSE)
     {
-      String job_bin = response.readStringUntil(',');
-      String time_bin = response.readStringUntil(',');
+      job_bin = response.readStringUntil(',');
+      time_bin = response.readStringUntil(',');
       job = str_binary2decimal(job_bin);
       time = str_binary2decimal(time_bin);
     }
@@ -281,7 +283,14 @@ void clients_sendJobDone(byte i)
 
     String identifier = String(rigIdentifier) + "-" + String(i);
 
-    clients[i].print(String(job) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
+    if (SLAVE_BINARY_RESPONSE)
+    {
+      clients[i].print(job_bin + "," + time_bin + "," + MINER + "," + String(identifier) + id);
+    }
+    else
+    {
+      clients[i].print(String(job) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
+    }
     Serial.print("[" + String(i) + "]");
     Serial.println("Job Done: (" + String(job) + ")" + " Hashrate: " + String(HashRate));
 
