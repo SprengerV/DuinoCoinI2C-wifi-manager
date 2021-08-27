@@ -9,6 +9,13 @@
 #include <ArduinoUniqueID.h>  // https://github.com/ricaun/ArduinoUniqueID
 #include <StreamString.h>     // https://github.com/ricaun/StreamJoin
 
+// user to manually change the device number
+// device number is being used to introduced fixed delay for each i2cSlave
+// cloned arduino is pretty bad in generating random number
+// increment this number per upload
+#define DEV_INDEX 1
+#define BINARY_RESPONSE true
+
 byte i2c = 1;
 StreamString bufferReceive;
 StreamString bufferRequest;
@@ -20,8 +27,11 @@ void DuinoCoin_setup()
   pinMode(A5, INPUT_PULLUP);
   pinMode(A4, INPUT_PULLUP);
   
-  unsigned long time = getTrueRotateRandomByte() * 1000 + getTrueRotateRandomByte();
-  delayMicroseconds(time);
+  //jk unsigned long time = getTrueRotateRandomByte() * 1000 + getTrueRotateRandomByte();
+  //jk delayMicroseconds(time);
+  //each i2cSlave should take less than 20ms to scan all addresses
+  delay(20*DEV_INDEX);
+  
   Wire.begin();
   for (int address = 1; address < 127; address++ )
   {
@@ -85,7 +95,14 @@ bool DuinoCoin_loop()
     unsigned long elapsedTime = endTime - startTime;
     // Send result back to the program with share time
     while (bufferRequest.available()) bufferRequest.read();
-    bufferRequest.print(String(ducos1result) + "," + String(elapsedTime) + "," + String(get_DUCOID()) + "\n");
+    if (BINARY_RESPONSE)
+    {
+      bufferRequest.print(String(ducos1result, 2) + "," + String(elapsedTime, 2) + "," + String(get_DUCOID()) + "\n");
+    }
+    else
+    {
+      bufferRequest.print(String(ducos1result) + "," + String(elapsedTime) + "," + String(get_DUCOID()) + "\n");
+    }
     return true;
   }
   return false;
