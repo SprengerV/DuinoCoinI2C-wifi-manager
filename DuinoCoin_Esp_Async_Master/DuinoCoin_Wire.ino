@@ -68,6 +68,12 @@ void Wire_send(byte address, String message)
   }
 }
 
+//jk
+void wire_reset(byte address)
+{
+    Wire_send(address, "BAD,BAD,840");
+}
+
 String wire_readLine(int address)
 {
   wire_runEvery(0);
