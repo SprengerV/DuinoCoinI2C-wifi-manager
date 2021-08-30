@@ -12,6 +12,7 @@ DuinoCoinI2C Version 2.6
 
 All Slaves have the same code and should select the I2C Address automatically.
 
+
 ## Library Dependency
 
 * [DuinoCoin](https://github.com/ricaun/arduino-DuinoCoin) (Handle the `Ducos1a` hash work)
@@ -21,6 +22,12 @@ All Slaves have the same code and should select the I2C Address automatically.
 ## Automatic I2C Address 
 
 The I2C Address on the Arduino is automatically updated when the board starts, if an Address already exists on the I2C bus the code finds another Address to use.
+However, depending on vendor, some cloned Arduino have a pretty bad random number generator. It causes it to either wait too long or clashes with each other during address assignment.
+
+For cloned Nanos, change the value on the define for each Nano:
+```
+#define DEV_INDEX 1
+```
 
 # Esp8266/Esp32 - Master
 
@@ -32,8 +39,8 @@ After the job is done, the slave sends back the response to the master (Esp8266/
 
 * [ArduinoJson](https://github.com/bblanchon/ArduinoJson) (Request Pool Version 2.6)
 * [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) (ESPAsyncWebServer)
-    * [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) (ESP8266)
-    * [AsyncTCP](https://github.com/me-no-dev/AsyncTCP) (ESP32)
+* [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) (ESP8266)
+* [AsyncTCP](https://github.com/me-no-dev/AsyncTCP) (ESP32)
 
 ## Max Client/Slave
 
