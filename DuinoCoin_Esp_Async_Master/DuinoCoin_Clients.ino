@@ -202,7 +202,7 @@ void clients_requestJob(byte i)
 {
   Serial.print("[" + String(i) + "]");
   Serial.println("Job Request: " + String(ducouser));
-  clients[i].print("JOBAVR," + String(ducouser) + "," + JOB);
+  clients[i].print(JOB + String(ducouser));
   clients_state(i, DUINO_STATE_JOB_WAIT);
 }
 
@@ -285,7 +285,7 @@ void clients_sendJobDone(byte i)
 
     if (SLAVE_BINARY_RESPONSE)
     {
-      clients[i].print(job_bin + "," + time_bin + "," + MINER + "," + String(identifier) + id);
+      clients[i].print(job_bin + "," + String(HashRate) + "," + MINER + "," + String(identifier) + "," + id);
     }
     else
     {
