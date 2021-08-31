@@ -4,9 +4,12 @@ This project design to mine [Duino-Coin](https://github.com/revoxhere/duino-coin
 
 Using the I2C communication to connect all the boards and make a scalable communication between the master and the slaves.
 
+Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://youtu.be/ErpdIaZk9EI)
+
 ## Version
 
-DuinoCoinI2C Version 2.6
+DuinoCoinI2C Version 2.7
+Master branch added software reset for nano if encountered 3 BAD job feedback
 
 # Arduino - Slave
 
