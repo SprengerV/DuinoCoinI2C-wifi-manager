@@ -321,8 +321,6 @@ void clients_waitFeedbackJobDone(byte i)
         Serial.println("BAD BAD BAD BAD");
         ws_sendAll("[" + String(i) + "]" + "BAD BAD BAD BAD");
         clients_stop(i);
-        //jk
-        wire_reset(i+1);
       }
     }
     else
