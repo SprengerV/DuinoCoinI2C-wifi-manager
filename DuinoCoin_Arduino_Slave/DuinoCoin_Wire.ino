@@ -8,7 +8,6 @@
 #include <DuinoCoin.h>        // https://github.com/ricaun/arduino-DuinoCoin
 #include <ArduinoUniqueID.h>  // https://github.com/ricaun/ArduinoUniqueID
 #include <StreamString.h>     // https://github.com/ricaun/StreamJoin
-#include <avr/wdt.h>
 
 // user to manually change the device number
 // device number is being used to introduced fixed delay for each i2cSlave
@@ -89,17 +88,6 @@ bool DuinoCoin_loop()
     String newblockhash = bufferReceive.readStringUntil(',');
     // Read difficulty
     unsigned int difficulty = bufferReceive.readStringUntil('\n').toInt();
-    
-    //jk
-    if (lastblockhash == "BAD") {
-        Serial.println("Received reset requests");
-        // use watchdog to force reset
-        // resetFunct(); somehow hung
-        wdt_enable(WDTO_15MS);
-        delay(100);
-        Serial.println("Should not reach here");
-        return false;
-    }
     
     // Start time measurement
     unsigned long startTime = micros();
