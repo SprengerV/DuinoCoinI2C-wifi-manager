@@ -15,7 +15,6 @@
 #endif
 
 #define CLIENTS 10
-#define SLAVE_BINARY_RESPONSE true
 
 #define CLIENT_CONNECT_EVERY 30000
 #define CLIENT_TIMEOUT_CONNECTION 30000
@@ -24,13 +23,28 @@
 #define END_TOKEN  '\n'
 #define SEP_TOKEN  ','
 
-String host = "149.91.88.18";
+#define HASHRATE_FORCE true
+#define HASHRATE_SPEED 195.0
+
+String host = "51.158.182.90";
 int port = 6000;
 
 void SetHostPort(String h, int p)
 {
   host = h;
   port = p;
+}
+
+String SetHost(String h)
+{
+  host = h;
+  return host;
+}
+
+int SetPort(int p)
+{
+  port = p;
+  return port;
 }
 
 // State Machine
@@ -67,7 +81,17 @@ bool clients_connected(byte i)
 //jk  return clients[i].connected();
 }
 
-bool connected_sw[CLIENTS] = {false,false,false,false,false,false,false,false,false,false};
+bool connected_sw[CLIENTS];
+bool run_once = true;
+void init_connected_sw()
+{
+  for (int client_i = 0; client_i < CLIENTS; client_i++)
+  {
+    connected_sw[client_i] = false;
+  }
+  run_once = false;
+}
+
 bool clients_connect(byte i)
 {
 //jk  if (clients[i].connected())
@@ -119,6 +143,7 @@ int client_i = 0;
 
 void clients_loop()
 {
+  if (run_once) init_connected_sw();
   if (clients_runEvery(clientsConnectTime))
   {
     clientsConnectTime = CLIENT_CONNECT_EVERY;
@@ -246,22 +271,6 @@ void clients_waitRequestJob(byte i)
   }
 }
 
-long int str_binary2decimal(String &binary_str)
-{
-    // convert binary string into decimal
-    long int time = 0;
-    long int square = 1;
-    for (int j = binary_str.length()-1; j >= 0 ; j--)
-    {
-        if (binary_str[j] == '1')
-        {
-            time += square;
-        }
-        square *= 2;
-    }
-    return time;
-}
-
 void clients_sendJobDone(byte i)
 {
   String responseJob = wire_readLine(i + 1);
@@ -272,39 +281,27 @@ void clients_sendJobDone(byte i)
     StreamString response;
     response.print(responseJob);
 
-    int time;
-    int job;
-    String job_bin;
-    String time_bin;
-    if (SLAVE_BINARY_RESPONSE)
-    {
-      job_bin = response.readStringUntil(',');
-      time_bin = response.readStringUntil(',');
-      job = str_binary2decimal(job_bin);
-      time = str_binary2decimal(time_bin);
-    }
-    else
-    {
-      job = response.readStringUntil(',').toInt();
-      time = response.readStringUntil(',').toInt();
-    }
+    int job = response.readStringUntil(',').toInt();
+    int time = response.readStringUntil(',').toInt();
     String id = response.readStringUntil('\n');
     float HashRate = job / (time * .000001f);
+
+    if (HASHRATE_FORCE) // Force HashRate to slow down
+    {
+      Serial.print("[" + String(i) + "]");
+      Serial.println("Slow down HashRate: " + String(HashRate, 2));
+      HashRate = HASHRATE_SPEED + random(-50, 50) / 100.0;
+    }
 
     if (id.length() > 0) id = "," + id;
 
     String identifier = String(rigIdentifier) + "-" + String(i);
 
-//    if (SLAVE_BINARY_RESPONSE)
-//    {
-//      clients[i].print(job_bin + "," + time_bin + "," + MINER + "," + String(identifier) + id);
-//    }
-//    else
-//    {
-//      clients[i].print(String(job) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
-//    }
+    //clients[i].print(String(job, 2) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
+
     Serial.print("[" + String(i) + "]");
-    Serial.println("Job Done: (" + String(job) + ")" + " Hashrate: " + String(HashRate));
+    Serial.println(String(job, 2) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
+    //Serial.println("Job Done: (" + String(job) + ")" + " Hashrate: " + String(HashRate));
 
     clients_state(i, DUINO_STATE_JOB_DONE_WAIT);
   }
@@ -347,7 +344,7 @@ String clients_string()
 {
   int i = 0;
   String str;
-  str += "I2C Connected";
+  str += "I2C ";
   str += "[";
   str += " ";
   for (i = 0; i < CLIENTS; i++)
