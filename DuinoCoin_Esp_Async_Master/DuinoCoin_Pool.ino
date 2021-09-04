@@ -60,7 +60,7 @@ String httpGetString(String URL)
 {
   String payload = "";
   WiFiClientSecure client;
-  client.setInsecure()
+  client.setInsecure();
   HTTPClient http;
   if (http.begin(client, URL))
   {
