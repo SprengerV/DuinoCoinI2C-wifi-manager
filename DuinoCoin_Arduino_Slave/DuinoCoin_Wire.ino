@@ -14,7 +14,6 @@
 // cloned arduino is pretty bad in generating random number
 // increment this number per upload
 #define DEV_INDEX 1
-#define BINARY_RESPONSE true
 
 byte i2c = 1;
 StreamString bufferReceive;
@@ -68,7 +67,8 @@ void receiveEvent(int howMany) {
 
 void requestEvent() {
   char c = '\n';
-  if (bufferRequest.length() > 0)
+  if (bufferRequest.available() > 0 && bufferRequest.indexOf('\n') != -1)
+  //if (bufferRequest.length() > 0)
   {
     c = bufferRequest.read();
   }
@@ -82,13 +82,16 @@ void requestEvent() {
 bool DuinoCoin_loop()
 {
   if (bufferReceive.available() > 0 && bufferReceive.indexOf('\n') != -1) {
+
+    Serial.print(F("Job: "));
+    Serial.print(bufferReceive);
+
     // Read last block hash
     String lastblockhash = bufferReceive.readStringUntil(',');
     // Read expected hash
     String newblockhash = bufferReceive.readStringUntil(',');
     // Read difficulty
     unsigned int difficulty = bufferReceive.readStringUntil('\n').toInt();
-    
     // Start time measurement
     unsigned long startTime = micros();
     // Call DUCO-S1A hasher
@@ -100,14 +103,11 @@ bool DuinoCoin_loop()
     unsigned long elapsedTime = endTime - startTime;
     // Send result back to the program with share time
     while (bufferRequest.available()) bufferRequest.read();
-    if (BINARY_RESPONSE)
-    {
-      bufferRequest.print(String(ducos1result, 2) + "," + String(elapsedTime, 2) + "," + String(get_DUCOID()) + "\n");
-    }
-    else
-    {
-      bufferRequest.print(String(ducos1result) + "," + String(elapsedTime) + "," + String(get_DUCOID()) + "\n");
-    }
+    bufferRequest.print(String(ducos1result) + "," + String(elapsedTime) + "," + String(get_DUCOID()) + "\n");
+    
+    Serial.print(F("Done "));
+    Serial.print(String(ducos1result) + "," + String(elapsedTime) + "," + String(get_DUCOID()) + "\n");
+
     return true;
   }
   return false;
