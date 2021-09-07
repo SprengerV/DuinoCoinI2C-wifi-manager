@@ -9,7 +9,6 @@ Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://you
 ## Version
 
 DuinoCoinI2C Version 2.7
-Master branch added software reset for nano if encountered 3 BAD job feedback
 
 # Arduino - Slave
 
@@ -52,6 +51,11 @@ The code supports 10 clients and can be changed on the define:
 ```
 #define CLIENTS 10
 ```
+
+# ESP Slave
+
+still in beta. observing i2cs missing after 10-20 shares
+random i2c packet lost and maybe soft wdt trigger
 
 # Connection Pinouts
 
