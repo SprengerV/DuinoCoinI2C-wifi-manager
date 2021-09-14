@@ -52,6 +52,22 @@ The code supports 10 clients and can be changed on the define:
 #define CLIENTS 10
 ```
 
+## AsyncWebserver
+
+Optional. AsyncWebServer allow user to get Master status, print pool info or force switch to specific pool.
+
+Connect to the Master via local IP address. Example address: `192.168.0.2`
+
+| Link | Description |
+|:-:| :----: |
+|http://192.168.0.2/ | show Serial monitor |
+|http://192.168.0.2/heap | show free memory | 
+|http://192.168.0.2/clients| show connected slaves|
+|http://192.168.0.2/printPool| print Pool address and port |
+|http://192.168.0.2/updatePool| force refresh pool address|
+|http://192.168.0.2/set?host=123.123.123.123&port=123|force pool address to `123.123.123.123` and port to `123`|
+|http://192.168.0.2/printMOTD|print pool message|
+
 # ESP Slave
 
 still in beta. observing i2cs missing after 10-20 shares
