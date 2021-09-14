@@ -35,6 +35,11 @@ void SetHostPort(String h, int p)
   port = p;
 }
 
+String getHostPort()
+{
+    return host + String(":") + String(port);
+}
+
 String SetHost(String h)
 {
   host = h;
@@ -71,6 +76,8 @@ String clientsBuffer[CLIENTS];
 unsigned long clientsTimes[CLIENTS];
 unsigned long clientsTimeOut[CLIENTS];
 byte clientsBadJob[CLIENTS];
+byte clientsForceReconnect[CLIENTS];
+String poolMOTD;
 
 unsigned long clientsConnectTime = 0;
 bool clientsMOTD = true;
@@ -106,9 +113,9 @@ bool clients_connect(byte i)
   wire_readLine(i);
 
   Serial.print("[" + String(i) + "]");
-  Serial.println("Fake Connecting to Duino-Coin server... with port " + String(port));
+  Serial.println("Connecting to Duino-Coin server... " + String(host) + " " + String(port));
 
-  ws_sendAll("[" + String(i) + "]" + "Fake Connecting to Duino-Coin server...");
+  ws_sendAll("[" + String(i) + "]" + "Connecting to Duino-Coin server... " + String(host) + " " + String(port));
 
 //jk  if (!clients[i].connect(host.c_str(), port))
 //jk  {
@@ -122,7 +129,8 @@ bool clients_connect(byte i)
   clientsTimes[i] = millis();
   clientsBuffer[i] = "";
   clients_state(i, DUINO_STATE_VERSION_WAIT);
-  connected_sw[i] = true; 
+  connected_sw[i] = true;
+  clientsForceReconnect[i] = false;
   return true;
 }
 
@@ -134,9 +142,19 @@ void clients_state(byte i, byte state)
 
 bool clients_stop(byte i)
 {
-  clients_state(i, DUINO_STATE_NONE); 
+  clients_state(i, DUINO_STATE_NONE);
+  connected_sw[i] = false;
 //jk  clients[i].stop();
   return true;
+}
+
+void force_clients_reconnect()
+{
+    for (byte j = 0; j < CLIENTS; j++)
+    {
+        clientsForceReconnect[j] = true;
+    }
+    clientsMOTD = true;
 }
 
 int client_i = 0;
@@ -205,6 +223,7 @@ void clients_waitMOTD(byte i)
   if (true) {
 //jk    String buffer = clients[i].readString();
     String buffer = "Welcome to the first Duino-Coin fake pool";
+    poolMOTD = buffer;
     Serial.println("[" + String(i) + "]" + buffer);
     clientsWaitJob[i] = DUINO_STATE_JOB_REQUEST;
     clientsTimeOut[i] = millis();
@@ -220,13 +239,17 @@ void clients_requestMOTD(byte i)
   clientsTimeOut[i] = millis();
 }
 
+String printMOTD()
+{
+    return poolMOTD;
+}
 
 void clients_waitRequestVersion(byte i)
 {
 //jk  if (clients[i].available()) {
   if (true) {
 //jk    String buffer = clients[i].readStringUntil(END_TOKEN);
-    String buffer = "2.6";
+    String buffer = "2.7";
     Serial.println("[" + String(i) + "]" + buffer);
     clients_state(i, DUINO_STATE_JOB_REQUEST);
     if (clientsMOTD) clients_state(i, DUINO_STATE_MOTD_REQUEST); 
@@ -336,6 +359,14 @@ void clients_waitFeedbackJobDone(byte i)
     else
     {
       clientsBadJob[i] = 0;
+    }
+
+    if (clientsForceReconnect[i])
+    {
+        Serial.print("[" + String(i) + "]");
+        Serial.println("Forced disconnect");
+        ws_sendAll("[" + String(i) + "]" + "Forced disconnect");
+        clients_stop(i);
     }
   }
 }
