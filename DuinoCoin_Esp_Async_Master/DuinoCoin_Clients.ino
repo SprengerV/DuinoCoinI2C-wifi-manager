@@ -164,7 +164,7 @@ void clients_loop()
     int i = client_i;
     if (wire_exists(i + 1) && clients_connected(i))
     {
-
+      for(int j = 0; j < 3; j++ )
       switch (clientsWaitJob[i])
       {
         case DUINO_STATE_VERSION_WAIT:
@@ -241,7 +241,7 @@ void clients_requestJob(byte i)
 {
   Serial.print("[" + String(i) + "]");
   Serial.println("Job Request: " + String(ducouser));
-  clients[i].print("JOB," + String(ducouser) + JOB);
+  clients[i].print("JOB," + String(ducouser) + "," + JOB);
   clients_state(i, DUINO_STATE_JOB_WAIT);
 }
 
