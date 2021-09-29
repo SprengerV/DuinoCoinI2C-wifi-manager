@@ -6,8 +6,6 @@
   Modified by JK-Rolling
 */
 
-#define GETPOOL_EN true
-
 #if ESP8266
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
@@ -37,21 +35,8 @@ void UpdateHostPort(String input)
 
 void UpdatePool()
 {
-  String input;
-  if (GETPOOL_EN)
-  {
-    input = httpGetString(urlPool);
-    if (input == "") return;
-  }
-  else
-  {
-    // AVR_Miner 2.64 uses this address
-    const char* hardcode_ip = "51.158.182.90";
-    int hardcode_port = 6000;
-    Serial.println("[ ]Update " + String(hardcode_ip) + " " + String(hardcode_port));
-    SetHostPort(String(hardcode_ip), hardcode_port);
-    return;
-  }
+  String input = httpGetString(urlPool);
+  if (input == "") return;
   
   UpdateHostPort(input);
 }
