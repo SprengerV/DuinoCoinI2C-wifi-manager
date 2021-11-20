@@ -8,7 +8,7 @@ Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://you
 
 ## Version
 
-DuinoCoinI2C Version 2.7
+DuinoCoinI2C Version 2.74
 
 # Arduino - Slave
 
@@ -59,7 +59,7 @@ Optional. AsyncWebServer allow user to get Master status, print pool info or for
 Connect to the Master via local IP address. Example address: `192.168.0.2`
 
 | Link | Description |
-|:-:| :----: |
+|:---| :--- |
 |http://192.168.0.2/ | show Serial monitor |
 |http://192.168.0.2/heap | show free memory | 
 |http://192.168.0.2/clients| show connected slaves|
@@ -68,14 +68,10 @@ Connect to the Master via local IP address. Example address: `192.168.0.2`
 |http://192.168.0.2/set?host=123.123.123.123&port=123|force pool address to `123.123.123.123` and port to `123`|
 |http://192.168.0.2/printMOTD|print pool message|
 
-# ESP Slave
-
-still in beta. observing i2cs missing after 10-20 shares
-random i2c packet lost and maybe soft wdt trigger
 
 # Connection Pinouts
 
-Connect the pins of the Esp8266 or Esp32 on the Arduino like the table/images below, use a [Logic Level Converter](https://www.sparkfun.com/products/12009) to connect between the ESP and Arduino.
+Connect the pins of the Esp01, Esp8266 or Esp32 on the Arduino like the table/images below, use a [Logic Level Converter](https://www.sparkfun.com/products/12009) to connect between the ESP and Arduino.
 
 || ESP8266 | ESP32 | Logic Level Converter | Arduino |
 |:-:| :----: | :----: | :-----: | :-----: |
@@ -85,6 +81,18 @@ Connect the pins of the Esp8266 or Esp32 on the Arduino like the table/images be
 |`SDA`|D2 (GPIO4) | GPIO21 | <---> | A4 |
 
 <img src="Resources/Fritzing/DuinoCoinI2C/DuinoCoinI2C_LLC.png" alt="DuinoCoinI2C" width="100%">
+
+
+**ESP01**
+|| ESP01 | Logic Level Converter | Arduino |
+|:-:| :----: | :-----: | :-----: |
+||3.3V | <---> | 5V |
+||GND | GND | <---> | GND |
+|`SCL`| GPIO2 | <---> | A5 |
+|`SDA`| GPIO0 | <---> | A4 |
+
+Uncomment `#define ESP01 true`
+<img src="Resources/Fritzing/DuinoCoinI2C/esp01.png" alt="ESP01" width="100%">
 
 ## Custom PCB
 
