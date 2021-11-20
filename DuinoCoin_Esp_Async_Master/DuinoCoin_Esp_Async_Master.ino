@@ -18,6 +18,9 @@ const char* password      = "";         // Change this to your WiFi password
 const char* ducouser      = "JK_TQVM";  // Change this to your Duino-Coin username
 const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom miner name
 
+// uncomment for ESP01
+//#define ESP01 true
+
 #if ESP8266
 #include <ESP8266WiFi.h> // Include WiFi library
 #include <ESP8266mDNS.h> // OTA libraries
@@ -37,13 +40,13 @@ const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom mine
 
 #if ESP8266
 #define LED_BUILTIN 2
-#define MINER "AVR I2C v2.73"
+#define MINER "AVR I2C v2.74"
 #define JOB "AVR"
 #endif
 
 #if ESP32
 #define LED_BUILTIN 2
-#define MINER "AVR I2C v2.73"
+#define MINER "AVR I2C v2.74"
 #define JOB "AVR"
 #endif
 
@@ -117,14 +120,18 @@ void blink(uint8_t count, uint8_t pin = LED_BUILTIN) {
 void RestartESP(String msg) {
   Serial.println(msg);
   Serial.println("Resetting ESP...");
-  blink(BLINK_RESET_DEVICE);
+  #ifndef ESP01
+    blink(BLINK_RESET_DEVICE);
+  #endif
   #if ESP8266
     ESP.reset();
   #endif
 }
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  #ifndef ESP01
+    pinMode(LED_BUILTIN, OUTPUT);
+  #endif
   Serial.begin(115200);
   Serial.print("\nDuino-Coin");
   Serial.println(MINER);
@@ -136,7 +143,9 @@ void setup() {
   server_setup();
   
   UpdatePool();
-  blink(BLINK_SETUP_COMPLETE);
+  #ifndef ESP01
+    blink(BLINK_SETUP_COMPLETE);
+  #endif
 }
 
 void loop() {
