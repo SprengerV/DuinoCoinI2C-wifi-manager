@@ -87,7 +87,7 @@ Connect the pins of the Esp01, Esp8266 or Esp32 on the Arduino like the table/im
 || ESP01 | Logic Level Converter | Arduino |
 |:-:| :----: | :-----: | :-----: |
 ||3.3V | <---> | 5V |
-||GND | GND | <---> | GND |
+||GND | <---> | GND |
 |`SCL`| GPIO2 | <---> | A5 |
 |`SDA`| GPIO0 | <---> | A4 |
 
