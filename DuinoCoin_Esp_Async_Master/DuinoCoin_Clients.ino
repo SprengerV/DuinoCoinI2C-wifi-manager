@@ -102,14 +102,16 @@ bool clients_connect(byte i)
   ws_sendAll("[" + String(i) + "]" + "Connecting to Duino-Coin server... " + String(host) + " " + String(port));
 
   clients[i].setTimeout(30000);
+  clients[i].flush();
   if (!clients[i].connect(host.c_str(), port))
   {
     Serial.print("[" + String(i) + "]");
-    Serial.println("Connection failed.");
+    Serial.println("Connection failed. Wait 5s before retry..");
+    delay(5000);
     UpdatePool();
     return false;
   }
-  clients[i].setTimeout(100);
+  clients[i].setTimeout(1);
 
   clientsShares[i] = 0;
   clientsBadJob[i] = 0;
