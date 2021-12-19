@@ -75,6 +75,8 @@ int clientsShares[CLIENTS];
 String clientsBuffer[CLIENTS];
 unsigned long clientsTimes[CLIENTS];
 unsigned long clientsTimeOut[CLIENTS];
+unsigned long clientsPingTime[CLIENTS];
+unsigned long clientsGetTime[CLIENTS];
 byte clientsBadJob[CLIENTS];
 byte clientsForceReconnect[CLIENTS];
 String poolMOTD;
@@ -244,6 +246,7 @@ void clients_requestJob(byte i)
   Serial.print("[" + String(i) + "]");
   Serial.println("Job Request: " + String(ducouser));
   clients[i].print("JOB," + String(ducouser) + "," + JOB);
+  clientsGetTime[i] = millis();
   clients_state(i, DUINO_STATE_JOB_WAIT);
 }
 
@@ -252,9 +255,12 @@ void clients_waitRequestJob(byte i)
   String clientBuffer = clients_readData(i);
   if (clientBuffer.length() > 0)
   {
-    Serial.print("[" + String(i) + "]");
+    unsigned long getJobTime = millis() - clientsGetTime[i];
+    Serial.print("[" + String(i) + "] ");
     Serial.print("Job ");
-    Serial.println(clientBuffer);
+    Serial.print(clientBuffer);
+    Serial.print("  ping " + String(getJobTime) + " ms");
+    ws_sendAll("[" + String(i) + "] Job "+ clientBuffer + "  ping " + String(getJobTime) + " ms");
 
     // Not a Valid Job -> Request Again
     if (clientBuffer.indexOf(',') == -1)
@@ -303,10 +309,10 @@ void clients_sendJobDone(byte i)
 
     clients[i].print(String(job) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
 
-    Serial.print("[" + String(i) + "]");
+    Serial.print("[" + String(i) + "] ");
     Serial.println(String(job) + "," + String(HashRate, 2) + "," + MINER + "," + String(identifier) + id);
     //Serial.println("Job Done: (" + String(job) + ")" + " Hashrate: " + String(HashRate));
-
+    clientsPingTime[i] = millis();
     clients_state(i, DUINO_STATE_JOB_DONE_WAIT);
   }
 }
@@ -317,12 +323,13 @@ void clients_waitFeedbackJobDone(byte i)
   if (clientBuffer.length() > 0)
   {
     unsigned long time = (millis() - clientsTimes[i]);
+    unsigned long pingTime = (millis() - clientsPingTime[i]);
     clientsShares[i]++;
     int Shares = clientsShares[i];
 
-    Serial.print("[" + String(i) + "]");
-    Serial.println("Job " + clientBuffer  + ": Share #" + String(Shares) + " " + timeString(time));
-    ws_sendAll("[" + String(i) + "]" + "Job " + clientBuffer  + ": Share #" + String(Shares) + " " + timeString(time));
+    Serial.print("[" + String(i) + "] ");
+    Serial.println("Job " + clientBuffer  + ": Share #" + String(Shares) + "  ping " + String(pingTime) + "ms  uptime" + timeString(time));
+    ws_sendAll("[" + String(i) + "] " + "Job " + clientBuffer  + ": Share #" + String(Shares) + "  ping " + String(pingTime) + "ms  uptime" + timeString(time));
 
     clients_state(i, DUINO_STATE_JOB_REQUEST);
 
