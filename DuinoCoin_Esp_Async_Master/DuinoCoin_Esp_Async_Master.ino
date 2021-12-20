@@ -2,6 +2,8 @@
   DoinoCoin_Esp_Master.ino
   created 10 05 2021
   by Luiz H. Cassettari
+  
+  Modified by JK Rolling
 */
 
 void wire_setup();
@@ -20,6 +22,7 @@ const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom mine
 
 // uncomment for ESP01
 //#define ESP01 true
+#define REPORT_INTERVAL 60000
 
 #if ESP8266
 #include <ESP8266WiFi.h> // Include WiFi library
@@ -149,11 +152,12 @@ void setup() {
 void loop() {
   ArduinoOTA.handle();
   clients_loop();
-  if (runEvery(5000))
+  if (runEvery(REPORT_INTERVAL))
   {
     Serial.print("[ ]");
     Serial.println("FreeRam: " + String(ESP.getFreeHeap()) + " " + clients_string());
     ws_sendAll("FreeRam: " + String(ESP.getFreeHeap()) + " - " + clients_string());
+    periodic_report(REPORT_INTERVAL);
   }
 }
 
