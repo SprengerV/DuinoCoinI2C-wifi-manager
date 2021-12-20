@@ -2,6 +2,8 @@
   DuinoCoin_Clients.ino
   created 10 05 2021
   by Luiz H. Cassettari
+  
+  Modified by JK Rolling
 */
 
 #if ESP8266
@@ -22,6 +24,9 @@
 
 #define END_TOKEN  '\n'
 #define SEP_TOKEN  ','
+#define BAD "Rejected"
+#define GOOD "Accepted"
+#define BLOCK "Block"
 
 #define HASHRATE_FORCE true
 #define HASHRATE_SPEED 195.0
@@ -77,9 +82,17 @@ unsigned long clientsTimes[CLIENTS];
 unsigned long clientsTimeOut[CLIENTS];
 unsigned long clientsPingTime[CLIENTS];
 unsigned long clientsGetTime[CLIENTS];
+unsigned long clientsElapsedTime[CLIENTS];
+float clientsHashRate[CLIENTS];
+unsigned int clientsDiff[CLIENTS];
 byte clientsBadJob[CLIENTS];
 byte clientsForceReconnect[CLIENTS];
 String poolMOTD;
+unsigned int share_count = 0;
+unsigned int accepted_count = 0;
+unsigned int block_count = 0;
+unsigned int last_share_count = 0;
+unsigned long startTime = millis();
 
 unsigned long clientsConnectTime = 0;
 bool clientsMOTD = true;
@@ -260,7 +273,7 @@ void clients_waitRequestJob(byte i)
     Serial.print("Job ");
     Serial.print(clientBuffer);
     Serial.print("  ping " + String(getJobTime) + " ms");
-    ws_sendAll("[" + String(i) + "] Job "+ clientBuffer + "  ping " + String(getJobTime) + " ms");
+    //ws_sendAll("[" + String(i) + "] Job "+ clientBuffer + "  ping " + String(getJobTime) + " ms");
 
     // Not a Valid Job -> Request Again
     if (clientBuffer.indexOf(',') == -1)
@@ -272,10 +285,9 @@ void clients_waitRequestJob(byte i)
     String hash = getValue(clientBuffer, SEP_TOKEN, 0);
     String job = getValue(clientBuffer, SEP_TOKEN, 1);
     unsigned int diff = getValue(clientBuffer, SEP_TOKEN, 2).toInt();
+    clientsDiff[i] = diff;
 
-    Serial.print("[" + String(i) + "]");
-    Serial.println("Job Receive: " + String(diff));
-
+    clientsElapsedTime[i] = millis();
     wire_sendJob(i + 1, hash, job, diff);
     clients_state(i, DUINO_STATE_JOB_DONE_SEND);
   }
@@ -286,7 +298,8 @@ void clients_sendJobDone(byte i)
   String responseJob = wire_readLine(i + 1);
   if (responseJob.length() > 0)
   {
-    ws_sendAll("[" + String(i) + "]" + responseJob);
+    clientsElapsedTime[i] = (millis() - clientsElapsedTime[i]);
+    //ws_sendAll("[" + String(i) + "]" + responseJob);
 
     StreamString response;
     response.print(responseJob);
@@ -295,6 +308,7 @@ void clients_sendJobDone(byte i)
     int time = response.readStringUntil(',').toInt();
     String id = response.readStringUntil('\n');
     float HashRate = job / (time * .000001f);
+    clientsHashRate[i] = HashRate;
 
     if (HASHRATE_FORCE) // Force HashRate to slow down
     {
@@ -326,10 +340,35 @@ void clients_waitFeedbackJobDone(byte i)
     unsigned long pingTime = (millis() - clientsPingTime[i]);
     clientsShares[i]++;
     int Shares = clientsShares[i];
+    
+    String verdict = "";
+    share_count++;
+    if (clientBuffer == "GOOD") {
+      accepted_count++;
+      verdict = GOOD;
+    }
+    else if (clientBuffer == "BLOCK") {
+      block_count++;
+      verdict = BLOCK;
+    }
+    else {
+      verdict = BAD;
+    }
 
-    Serial.print("[" + String(i) + "] ");
-    Serial.println("Job " + clientBuffer  + ": Share #" + String(Shares) + "  ping " + String(pingTime) + "ms  uptime" + timeString(time));
-    ws_sendAll("[" + String(i) + "] " + "Job " + clientBuffer  + ": Share #" + String(Shares) + "  ping " + String(pingTime) + "ms  uptime" + timeString(time));
+    Serial.println("[" + String(i) + "] " 
+                + verdict + "  ⛏ " + String(accepted_count) + "/" + String(share_count) 
+                + " (" + String((float)accepted_count/(float)share_count*100, 2) + "%)  "
+                + String(clientsElapsedTime[i]/1000.0, 2) + "s  "
+                + String(clientsHashRate[i], 2) + " H/s  ⚙ "
+                + "diff " + String(clientsDiff[i])
+                + "  ping " + String(pingTime) + "ms");
+    ws_sendAll("[" + String(i) + "] " 
+                + verdict + "  ⛏ " + String(accepted_count) + "/" + String(share_count) 
+                + " (" + String((float)accepted_count/(float)share_count*100, 2) + "%)  "
+                + String(clientsElapsedTime[i]/1000.0, 2) + "s  "
+                + String(clientsHashRate[i], 2) + " H/s  ⚙ "
+                + "diff " + String(clientsDiff[i])
+                + "  ping " + String(pingTime) + "ms");
 
     clients_state(i, DUINO_STATE_JOB_REQUEST);
 
@@ -528,4 +567,26 @@ boolean clients_runEvery(unsigned long interval)
     return true;
   }
   return false;
+}
+
+void periodic_report(unsigned long interval)
+{
+    unsigned long uptime = (millis() - startTime);
+    unsigned int report_shares = share_count - last_share_count;
+    Serial.println("Periodic mining report:");
+    Serial.println(" ‖ During the last " + String(interval/1000.0, 1) + " seconds");
+    Serial.println(" ‖ You've mined " + String(report_shares)+ " shares (" + String((float)report_shares/(interval/1000.0), 2) + " shares/s)");
+    Serial.println(" ‖ Block(s) found: " + String(block_count));
+    Serial.println(" ‖ With the hashrate of " + String(clientsHashRate[CLIENTS-1], 2) + " H/s  ");
+    Serial.println(" ‖ In this time period, you've solved " + String(report_shares) + " hashes");
+    Serial.println(" ‖ Total miner uptime: " + timeString(uptime));
+    
+    ws_sendAll("Periodic mining report:");
+    ws_sendAll(" ‖ During the last " + String(interval/1000.0, 1) + " seconds");
+    ws_sendAll(" ‖ You've mined " + String(report_shares)+ " shares (" + String((float)report_shares/(interval/1000.0), 2) + " shares/s)");
+    ws_sendAll(" ‖ Block(s) found: " + String(block_count));
+    ws_sendAll(" ‖ With the hashrate of " + String(clientsHashRate[CLIENTS-1], 2) + " H/s  ");
+    ws_sendAll(" ‖ In this time period, you've solved " + String(report_shares) + " hashes");
+    ws_sendAll(" ‖ Total miner uptime: " + timeString(uptime));
+    last_share_count = share_count;
 }
