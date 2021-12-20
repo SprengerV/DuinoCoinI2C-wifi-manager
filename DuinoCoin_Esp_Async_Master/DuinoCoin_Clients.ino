@@ -134,6 +134,10 @@ bool clients_connect(byte i)
   clientsBuffer[i] = "";
   clients_state(i, DUINO_STATE_VERSION_WAIT);
   clientsForceReconnect[i] = false;
+  share_count = 0;
+  accepted_count = 0;
+  block_count = 0;
+  last_share_count = 0;
   return true;
 }
 
@@ -224,6 +228,7 @@ void clients_waitMOTD(byte i)
     String buffer = clients[i].readString();
     poolMOTD = buffer;
     Serial.println("[" + String(i) + "]" + buffer);
+    ws_sendAll("[" + String(i) + "]" + buffer);
     clientsWaitJob[i] = DUINO_STATE_JOB_REQUEST;
     clientsTimeOut[i] = millis();
   }
@@ -233,6 +238,7 @@ void clients_requestMOTD(byte i)
 {
   Serial.print("[" + String(i) + "]");
   Serial.println("MOTD Request: " + String(ducouser));
+  ws_sendAll("MOTD Request: " + String(ducouser));
   clients[i].print("MOTD");
   clientsWaitJob[i] = DUINO_STATE_MOTD_WAIT;
   clientsTimeOut[i] = millis();
