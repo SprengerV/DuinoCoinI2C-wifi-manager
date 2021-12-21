@@ -73,6 +73,12 @@ Connect to the Master via local IP address. Example address: `192.168.0.2`
 
 Optional. AsyncWebServer allow user to get periodic mining report.
 
+Upload `data` folder by using corresponding data upload tool
+
+https://github.com/esp8266/arduino-esp8266fs-plugin
+
+https://github.com/me-no-dev/arduino-esp32fs-plugin
+
 Connect to the Master via local IP address. Example address: `192.168.0.2`
 
 Change reporting interval by modifying `#define REPORT_INTERVAL 60000`
