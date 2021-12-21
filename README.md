@@ -69,6 +69,17 @@ Connect to the Master via local IP address. Example address: `192.168.0.2`
 |http://192.168.0.2/printMOTD|print pool message|
 
 
+## Periodic Report
+
+Optional. AsyncWebServer allow user to get periodic mining report.
+
+Connect to the Master via local IP address. Example address: `192.168.0.2`
+
+Change reporting interval by modifying `#define REPORT_INTERVAL 60000`
+
+<img src="Resources/image/periodic_report.jpg" alt="periodic_report" width="100%">
+
+
 # Connection Pinouts
 
 Connect the pins of the Esp01, Esp8266 or Esp32 on the Arduino like the table/images below, use a [Logic Level Converter](https://www.sparkfun.com/products/12009) to connect between the ESP and Arduino.
