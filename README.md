@@ -71,7 +71,7 @@ Connect to the Master via local IP address. Example address: `192.168.0.2`
 
 ## Periodic Report
 
-Optional. AsyncWebServer allow user to get periodic mining report.
+Optional. AsyncWebServer allow user to get periodic mining report via any Internet browser. e.g. Chrome/Firefox/Safari/etc
 
 Upload `data` folder by using corresponding data upload tool
 
