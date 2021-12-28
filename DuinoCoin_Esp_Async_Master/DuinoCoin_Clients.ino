@@ -592,7 +592,7 @@ void periodic_report(unsigned long interval)
     ws_sendAll(" ‖ You've mined " + String(report_shares)+ " shares (" + String((float)report_shares/(interval/1000.0), 2) + " shares/s)");
     ws_sendAll(" ‖ Block(s) found: " + String(block_count));
     ws_sendAll(" ‖ With the hashrate of " + String(clientsHashRate[CLIENTS-1], 2) + " H/s  ");
-    ws_sendAll(" ‖ In this time period, you've solved " + String(report_shares) + " hashes");
+    ws_sendAll(" ‖ In this time period, you've solved " + String(report_shares * (interval/1000)) + " hashes");
     ws_sendAll(" ‖ Total miner uptime: " + timeString(uptime));
     last_share_count = share_count;
 }
