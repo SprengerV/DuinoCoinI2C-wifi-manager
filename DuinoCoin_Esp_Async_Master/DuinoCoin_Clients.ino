@@ -31,8 +31,8 @@
 #define HASHRATE_FORCE true
 #define HASHRATE_SPEED 195.0
 
-String host = "51.158.113.59";
-int port = 6042;
+String host = "176.32.35.94";
+int port = 6000;
 
 void SetHostPort(String h, int p)
 {
