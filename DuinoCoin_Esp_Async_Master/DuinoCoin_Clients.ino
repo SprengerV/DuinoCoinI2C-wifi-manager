@@ -121,12 +121,11 @@ bool clients_connect(byte i)
   if (!clients[i].connect(host.c_str(), port))
   {
     Serial.print("[" + String(i) + "]");
-    Serial.println("Connection failed. Wait 5s before retry..");
-    delay(5000);
+    Serial.println("Connection failed..");
     UpdatePool();
     return false;
   }
-  clients[i].setTimeout(1);
+  clients[i].setTimeout(15);
 
   clientsShares[i] = 0;
   clientsBadJob[i] = 0;
