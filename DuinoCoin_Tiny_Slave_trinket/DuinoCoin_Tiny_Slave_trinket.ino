@@ -7,7 +7,7 @@
   12 Sep 2021
   for Adafruit Trinket attiny85
 */
-
+#pragma GCC optimize ("-O2")
 #include <ArduinoUniqueID.h>  // https://github.com/ricaun/ArduinoUniqueID
 #include <EEPROM.h>
 //#include <Wire.h>
