@@ -26,7 +26,7 @@
 // SDA - PB0 - 0
 
 // comment out FIND_I2C to save 16% of program storage space
-#define FIND_I2C
+// #define FIND_I2C
 
 #define ADDRESS_I2C 1
 #define EEPROM_ADDRESS 0
