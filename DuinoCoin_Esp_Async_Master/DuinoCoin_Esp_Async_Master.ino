@@ -42,12 +42,12 @@ const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom mine
 #define BLINK_RESET_DEVICE   5
 
 #if ESP8266
-#define MINER "AVR I2C v2.75"
+#define MINER "AVR I2C v3.0"
 #define JOB "AVR"
 #endif
 
 #if ESP32
-#define MINER "AVR I2C v2.75"
+#define MINER "AVR I2C v3.0"
 #define JOB "AVR"
 #endif
 
