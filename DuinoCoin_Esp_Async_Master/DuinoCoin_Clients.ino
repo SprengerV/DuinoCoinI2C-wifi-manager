@@ -28,11 +28,11 @@
 #define GOOD "Accepted"
 #define BLOCK "Block"
 
-#define HASHRATE_FORCE true
-#define HASHRATE_SPEED 195.0
+#define HASHRATE_FORCE false
+#define HASHRATE_SPEED 258.0
 
-String host = "51.158.113.59";
-int port = 11519;
+String host = "5.230.71.188";
+int port = 6000;
 
 void SetHostPort(String h, int p)
 {
