@@ -6,30 +6,48 @@
   Modified by JK-Rolling
   12 Sep 2021
   for Adafruit Trinket attiny85
+  V3.0-1
+  * use -O2 optimization
+  v2.7.5-2
+  * added HASHRATE_FORCE
+  v2.7.5-1
+  * added CRC8 checks
+  * added WDT to auto reset after 8s of inactivity
 */
 #pragma GCC optimize ("-O2")
+// enabling FIND_I2C might not fit into Trinket, unless bootloader is removed to regain full 8KB and load via hw programmer
+//#define FIND_I2C
+//#define WDT_EN
+//#define CRC8_EN
+//#define HASHRATE_FORCE
+
+// user to manually change the device number
+// final I2CS address will be I2CS_START_ADDRESS + DEV_INDEX
+// example: 3 + 0 = 3
+// FIND_I2C will override DEV_INDEX to auto self-assign address
+#define DEV_INDEX 0
+
+// change this start address to suit your SBC usable I2C address
+#define I2CS_START_ADDRESS 1
+
 #include <ArduinoUniqueID.h>  // https://github.com/ricaun/ArduinoUniqueID
-#include <EEPROM.h>
-//#include <Wire.h>
 #include <TinyWireM.h>
 #include "TinyWireS.h"
 #include "sha1.h"
+#ifdef WDT_EN
+  #include <avr/wdt.h>
+#endif
 
 #if defined(ARDUINO_AVR_UNO) | defined(ARDUINO_AVR_PRO)
 #define SERIAL_LOGGER Serial
 #endif
 #define LED LED_BUILTIN
+#define HASHRATE_SPEED 258
 
 // ATtiny85 - http://drazzy.com/package_drazzy.com_index.json
 // Adafruit Trinket ATtiny85 https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
 // SCL - PB2 - 2
 // SDA - PB0 - 0
-
-// comment out FIND_I2C to save 16% of program storage space
-// #define FIND_I2C
-
-#define ADDRESS_I2C 1
-#define EEPROM_ADDRESS 0
 
 #ifdef SERIAL_LOGGER
 #define SerialBegin()              SERIAL_LOGGER.begin(115200);
@@ -53,7 +71,7 @@
 #define LedBlink()
 #endif
 
-#define BUFFER_MAX 88
+#define BUFFER_MAX 90
 #define HASH_BUFFER_SIZE 20
 #define CHAR_END '\n'
 #define CHAR_DOT ','
@@ -76,12 +94,19 @@ void(* resetFunc) (void) = 0;//declare reset function at address 0
 // --------------------------------------------------------------------- //
 
 void setup() {
+  #ifdef WDT_EN
+  wdt_disable();
+  #endif
   SerialBegin();
   initialize_i2c();
+  #ifdef WDT_EN
+  wdt_enable(WDTO_8S);
+  #endif
   LedBegin();
   LedBlink();
   LedBlink();
   LedBlink();
+  SerialPrintln("Startup Done!");
 }
 
 // --------------------------------------------------------------------- //
@@ -91,16 +116,7 @@ void setup() {
 void loop() {
   do_work();
   millis(); // ????? For some reason need this to work the i2c
-#ifdef SERIAL_LOGGER
-  if (SERIAL_LOGGER.available())
-  {
-#ifdef EEPROM_ADDRESS
-    EEPROM.write(EEPROM_ADDRESS, SERIAL_LOGGER.parseInt());
-#endif
-    resetFunc();
-  }
-#endif
-TinyWireS_stop_check();
+  TinyWireS_stop_check();
 }
 
 // --------------------------------------------------------------------- //
@@ -158,12 +174,24 @@ void do_job()
   unsigned long startTime = millis();
   int job = work();
   unsigned long endTime = millis();
+  
+  #ifdef HASHRATE_FORCE
+  unsigned long elapsedTime;
+  elapsedTime = (unsigned long)job * 1000UL;
+  elapsedTime = elapsedTime / (HASHRATE_SPEED + random(-5,5));
+  #else
   unsigned int elapsedTime = endTime - startTime;
+  #endif
+  if (job<5) elapsedTime = job*(1<<2);
+  
   memset(buffer, 0, sizeof(buffer));
   char cstr[16];
-
+  
   // Job
-  itoa(job, cstr, 10);
+  if (job == 0)
+    strcpy(cstr,"#"); // re-request job
+  else
+    itoa(job, cstr, 10);
   strcpy(buffer, cstr);
   buffer[strlen(buffer)] = CHAR_DOT;
 
@@ -181,6 +209,15 @@ void do_job()
     if (UniqueID8[i] < 16) strcpy(buffer + strlen(buffer), "0");
     strcpy(buffer + strlen(buffer), cstr);
   }
+  
+#ifdef CRC8_EN
+  char gen_crc8[3];
+  buffer[strlen(buffer)] = CHAR_DOT;
+
+  // CRC8
+  itoa(crc8((uint8_t *)buffer, strlen(buffer)), gen_crc8, 10);
+  strcpy(buffer + strlen(buffer), gen_crc8);
+#endif
 
   SerialPrintln(buffer);
 
@@ -188,6 +225,10 @@ void do_job()
   buffer_length = strlen(buffer);
   working = false;
   jobdone = true;
+  
+  #ifdef WDT_EN
+  wdt_reset();
+  #endif
 }
 
 int work()
@@ -196,6 +237,27 @@ int work()
   char *lastHash = strtok(buffer, delimiters);
   char *newHash = strtok(NULL, delimiters);
   char *diff = strtok(NULL, delimiters);
+  
+#ifdef CRC8_EN
+  char *received_crc8 = strtok(NULL, delimiters);
+  // do crc8 checks here
+  uint8_t job_length = 3; // 3 commas
+  job_length += strlen(lastHash) + strlen(newHash) + strlen(diff);
+  char buffer_temp[job_length+1];
+  strcpy(buffer_temp, lastHash);
+  strcat(buffer_temp, delimiters);
+  strcat(buffer_temp, newHash);
+  strcat(buffer_temp, delimiters);
+  strcat(buffer_temp, diff);
+  strcat(buffer_temp, delimiters);
+  
+  if (atoi(received_crc8) != crc8((uint8_t *)buffer_temp,job_length)) {
+    // data corrupted
+    SerialPrintln("CRC8 mismatched. Abort..");
+    return 0;
+  }
+#endif
+
   buffer_length = 0;
   buffer_position = 0;
   return work(lastHash, newHash, atoi(diff));
@@ -226,6 +288,10 @@ uint32_t work(char * lastblockhash, char * newblockhash, int difficulty)
     {
       return ducos1res;
     }
+    #ifdef WDT_EN
+    if (runEvery(2000))
+      wdt_reset();
+    #endif
   }
   return 0;
 }
@@ -235,14 +301,10 @@ uint32_t work(char * lastblockhash, char * newblockhash, int difficulty)
 // --------------------------------------------------------------------- //
 
 void initialize_i2c(void) {
-  address = ADDRESS_I2C;
+  address = DEV_INDEX + I2CS_START_ADDRESS;
 
-#ifdef EEPROM_ADDRESS
-  address = EEPROM.read(EEPROM_ADDRESS);
-  if (address == 0 || address > 127) {
-    address = ADDRESS_I2C;
-    EEPROM.write(EEPROM_ADDRESS, address);
-  }
+#ifdef FIND_I2C
+  address = find_i2c();
 #endif
 
   SerialPrint("Wire begin ");
@@ -252,7 +314,7 @@ void initialize_i2c(void) {
   TinyWireS.onRequest(onRequestResult);
 }
 
-void onReceiveJob(int howMany) {    
+void onReceiveJob(uint8_t howMany) {    
   if (howMany == 0) return;
   if (working) return;
   if (jobdone) return;
@@ -293,7 +355,7 @@ byte find_i2c()
   delayMicroseconds(time);
   TinyWireM.begin();
   int address;
-  for (address = 1; address < WIRE_MAX; address++ )
+  for (address = I2CS_START_ADDRESS; address < WIRE_MAX; address++ )
   {
     TinyWireM.beginTransmission(address);
     int error = TinyWireM.endTransmission();
@@ -302,7 +364,6 @@ byte find_i2c()
       break;
     }
   }
-  TinyWireS.begin(address);
   //Wire.end();
   return address;
 }
@@ -371,4 +432,22 @@ byte getTrueRotateRandomByte() {
   return lastByte ^ leftStack ^ rightStack;
 }
 
+#endif
+
+#ifdef CRC8_EN
+// https://stackoverflow.com/questions/51731313/cross-platform-crc8-function-c-and-python-parity-check
+uint8_t crc8( uint8_t *addr, uint8_t len) {
+      uint8_t crc=0;
+      for (uint8_t i=0; i<len;i++) {
+         uint8_t inbyte = addr[i];
+         for (uint8_t j=0;j<8;j++) {
+             uint8_t mix = (crc ^ inbyte) & 0x01;
+             crc >>= 1;
+             if (mix) 
+                crc ^= 0x8C;
+         inbyte >>= 1;
+      }
+    }
+   return crc;
+}
 #endif
