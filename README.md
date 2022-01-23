@@ -8,27 +8,28 @@ Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://you
 
 ## Version
 
-DuinoCoinI2C Version 2.74
+DuinoCoinI2C Version 3.0
 
 # Arduino - Slave
 
-All Slaves have the same code and should select the I2C Address automatically.
+All Slaves have the same code and should select the I2C Address automatically if `#define FIND_I2C` is uncommented
+
+Arduino shall use `DuinoCoin_Tiny_Slave` sketch
 
 
 ## Library Dependency
 
-* [DuinoCoin](https://github.com/ricaun/arduino-DuinoCoin) (Handle the `Ducos1a` hash work)
 * [ArduinoUniqueID](https://github.com/ricaun/ArduinoUniqueID) (Handle the chip ID)
 * [StreamJoin](https://github.com/ricaun/StreamJoin) (StreamString for AVR)
 
 ## Automatic I2C Address 
 
-The I2C Address on the Arduino is automatically updated when the board starts, if an Address already exists on the I2C bus the code finds another Address to use.
+The I2C Address on the Arduino is automatically updated when the board starts, if an Address already exists on the I2C bus the code finds another Address to use (with `FIND_I2C` enabled).
 However, depending on vendor, some cloned Arduino have a pretty bad random number generator. It causes it to either wait too long or clashes with each other during address assignment.
 
 For cloned Nanos, change the value on the define for each Nano:
 ```
-#define DEV_INDEX 1
+#define DEV_INDEX 0
 ```
 
 # Esp8266/Esp32 - Master
@@ -51,6 +52,8 @@ The code supports 10 clients and can be changed on the define:
 ```
 #define CLIENTS 10
 ```
+
+Note: Community reported share rate will not improve beyond 5 slaves
 
 ## AsyncWebserver
 
