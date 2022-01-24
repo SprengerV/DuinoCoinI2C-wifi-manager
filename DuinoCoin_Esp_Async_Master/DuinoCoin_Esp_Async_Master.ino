@@ -19,6 +19,7 @@ const char* ssid          = "";         // Change this to your WiFi SSID
 const char* password      = "";         // Change this to your WiFi password
 const char* ducouser      = "JK_TQVM";  // Change this to your Duino-Coin username
 const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom miner name
+const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom local mDNS miner name
 
 // uncomment for ESP01
 //#define ESP01 true
@@ -30,6 +31,7 @@ const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom mine
 #include <WiFiUdp.h>
 #endif
 #if ESP32
+#include <ESPmDNS.h>
 #include <WiFi.h>
 #endif
 
@@ -142,6 +144,17 @@ void setup() {
   SetupOTA();
 
   server_setup();
+  
+  if (!MDNS.begin(mDNSRigIdentifier)) {
+    Serial.println("mDNS unavailable");
+  }
+  MDNS.addService("http", "tcp", 80);
+  Serial.println("Configured mDNS for dashboard on http://" 
+                + String(mDNSRigIdentifier)
+                + ".local (or http://"
+                + WiFi.localIP().toString()
+                + ")");
+  Serial.println();
   
   UpdatePool();
   #ifndef ESP01
