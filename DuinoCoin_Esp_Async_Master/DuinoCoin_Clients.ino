@@ -125,7 +125,7 @@ bool clients_connect(byte i)
     UpdatePool();
     return false;
   }
-  clients[i].setTimeout(15);
+  clients[i].setTimeout(1);
 
   clientsShares[i] = 0;
   clientsBadJob[i] = 0;
