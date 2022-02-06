@@ -89,7 +89,7 @@ void Wire_send(byte address, String message)
   int i=0;
   while (i < message.length())
   {
-    if (wire_runEveryMicro(400)) {
+    if (wire_runEveryMicro(500)) {
       Wire.beginTransmission(address);
       Wire.write(message.charAt(i));
       Wire.endTransmission();
