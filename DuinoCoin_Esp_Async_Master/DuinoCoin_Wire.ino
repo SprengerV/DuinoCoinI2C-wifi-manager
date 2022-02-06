@@ -85,11 +85,16 @@ void Wire_sendln(byte address, String message)
 void Wire_send(byte address, String message)
 {
   wire_start();
-  for (int i = 0; i < message.length(); i++)
+  
+  int i=0;
+  while (i < message.length())
   {
-    Wire.beginTransmission(address);
-    Wire.write(message.charAt(i));
-    Wire.endTransmission();
+    if (wire_runEveryMicro(400)) {
+      Wire.beginTransmission(address);
+      Wire.write(message.charAt(i));
+      Wire.endTransmission();
+      i++;
+    }
   }
 }
 
@@ -127,6 +132,18 @@ boolean wire_runEvery(unsigned long interval)
   if (currentMillis - previousMillis >= interval)
   {
     previousMillis = currentMillis;
+    return true;
+  }
+  return false;
+}
+
+boolean wire_runEveryMicro(unsigned long interval)
+{
+  static unsigned long previousMicros = 0;
+  unsigned long currentMicros = micros();
+  if (currentMicros - previousMicros >= interval)
+  {
+    previousMicros = currentMicros;
     return true;
   }
   return false;
