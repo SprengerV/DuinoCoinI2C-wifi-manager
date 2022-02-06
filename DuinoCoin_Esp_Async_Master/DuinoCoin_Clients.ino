@@ -379,7 +379,7 @@ void clients_waitFeedbackJobDone(byte i)
 
     if (clientBuffer == "BAD")
     {
-      if (clientsBadJob[i]++ > 3)
+      if (clientsBadJob[i]++ > 9)
       {
         Serial.print("[" + String(i) + "]");
         Serial.println("BAD BAD BAD BAD");
