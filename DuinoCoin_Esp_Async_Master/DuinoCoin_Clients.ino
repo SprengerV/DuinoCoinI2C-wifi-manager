@@ -33,6 +33,7 @@
 
 String host = "162.55.103.174";
 int port = 6000;
+String final_mining_key = "None";
 
 void SetHostPort(String h, int p)
 {
@@ -55,6 +56,11 @@ int SetPort(int p)
 {
   port = p;
   return port;
+}
+
+void SetMiningKey(String key)
+{
+    final_mining_key = key;
 }
 
 // State Machine
@@ -261,9 +267,11 @@ void clients_waitRequestVersion(byte i)
 
 void clients_requestJob(byte i)
 {
-  Serial.print("[" + String(i) + "]");
+  Serial.print("[" + String(i) + "] ");
   Serial.println("Job Request: " + String(ducouser));
-  clients[i].print("JOB," + String(ducouser) + "," + JOB);
+//  Serial.print("Job Request: ");
+//  Serial.println("JOB," + String(ducouser) + "," + JOB + "," + String(final_mining_key));
+  clients[i].print("JOB," + String(ducouser) + "," + JOB + "," + String(final_mining_key));
   clientsGetTime[i] = millis();
   clients_state(i, DUINO_STATE_JOB_WAIT);
 }
@@ -277,7 +285,7 @@ void clients_waitRequestJob(byte i)
     Serial.print("[" + String(i) + "] ");
     Serial.print("Job ");
     Serial.print(clientBuffer);
-    Serial.print("  ping " + String(getJobTime) + " ms");
+    Serial.println("  ping " + String(getJobTime) + " ms");
     //ws_sendAll("[" + String(i) + "] Job "+ clientBuffer + "  ping " + String(getJobTime) + " ms");
 
     // Not a Valid Job -> Request Again
@@ -578,20 +586,38 @@ void periodic_report(unsigned long interval)
 {
     unsigned long uptime = (millis() - startTime);
     unsigned int report_shares = share_count - last_share_count;
+    float average_hashrate = calc_avg_hashrate();
     Serial.println("Periodic mining report:");
     Serial.println(" ‖ During the last " + String(interval/1000.0, 1) + " seconds");
     Serial.println(" ‖ You've mined " + String(report_shares)+ " shares (" + String((float)report_shares/(interval/1000.0), 2) + " shares/s)");
     Serial.println(" ‖ Block(s) found: " + String(block_count));
-    Serial.println(" ‖ With the hashrate of " + String(clientsHashRate[CLIENTS-1], 2) + " H/s  ");
-    Serial.println(" ‖ In this time period, you've solved " + String(clientsHashRate[CLIENTS-1] * (interval/1000)) + " hashes");
+    Serial.println(" ‖ With the average hashrate of " + String(average_hashrate, 2) + " H/s  ");
+    Serial.println(" ‖ In this time period, you've solved " + String(average_hashrate * (interval/1000),0) + " hashes");
     Serial.println(" ‖ Total miner uptime: " + timeString(uptime));
     
     ws_sendAll("Periodic mining report:");
     ws_sendAll(" ‖ During the last " + String(interval/1000.0, 1) + " seconds");
     ws_sendAll(" ‖ You've mined " + String(report_shares)+ " shares (" + String((float)report_shares/(interval/1000.0), 2) + " shares/s)");
     ws_sendAll(" ‖ Block(s) found: " + String(block_count));
-    ws_sendAll(" ‖ With the hashrate of " + String(clientsHashRate[CLIENTS-1], 2) + " H/s  ");
-    ws_sendAll(" ‖ In this time period, you've solved " + String(clientsHashRate[CLIENTS-1] * (interval/1000)) + " hashes");
+    ws_sendAll(" ‖ With the average hashrate of " + String(average_hashrate, 2) + " H/s  ");
+    ws_sendAll(" ‖ In this time period, you've solved " + String(average_hashrate * (interval/1000),0) + " hashes");
     ws_sendAll(" ‖ Total miner uptime: " + timeString(uptime));
     last_share_count = share_count;
+}
+
+float calc_avg_hashrate()
+{
+    float hashrate_sum = 0;
+    int client_count = 0;
+    
+    for (int i = 0; i < CLIENTS; i++)
+    {
+        if (clientsHashRate[i] > 0.0)
+        {
+            client_count += 1;
+            hashrate_sum += clientsHashRate[i];
+        }
+    }
+    if (client_count == 0) return 0;
+    else return hashrate_sum / float(client_count);
 }
