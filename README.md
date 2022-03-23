@@ -8,7 +8,7 @@ Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://you
 
 ## Version
 
-DuinoCoinI2C Version 3.0
+DuinoCoinI2C Version 3.1
 
 # Arduino - Slave
 
