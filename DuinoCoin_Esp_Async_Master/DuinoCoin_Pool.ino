@@ -16,12 +16,11 @@
 
 #include <ArduinoJson.h>
 
-//const char * urlPool = "http://51.15.127.80:4242/getPool";
 const char * urlPool = "https://server.duinocoin.com/getPool";
+const char * urlMiningKeyStatus = "https://server.duinocoin.com/mining_key";
 
 void UpdateHostPort(String input)
 {
-  // {"ip":"server.duinocoin.com","port":2812,"name":"Main server"}
   DynamicJsonDocument doc(256);
   deserializeJson(doc, input);
 
@@ -61,4 +60,47 @@ String httpGetString(String URL)
     http.end();
   }
   return payload;
+}
+
+void UpdateMiningKey()
+{
+    String url = String(urlMiningKeyStatus) + "?u=" + String(ducouser) + "&k=" + mining_key;
+    String input = httpGetString(url);
+    if (input == "") return;
+
+    CheckMiningKey(input);
+}
+
+void CheckMiningKey(String input) 
+{
+    Serial.println("[ ] CheckMiningKey " + input);
+    DynamicJsonDocument doc(128);
+    deserializeJson(doc, input);
+
+    //input::{"has_key":false,"success":true}
+    bool has_key = doc["has_key"];
+    bool success = doc["success"];
+
+    Serial.println("[ ] mining_key has_key: " + String(has_key) + "  success: " + String(success));
+
+    if (success && !has_key) {
+        Serial.println("[ ] Wallet does not have a mining key. Proceed..");
+        SetMiningKey("None");
+    }
+    else if (!success) {
+        if (mining_key == "None") {
+            Serial.println("[ ] Update mining_key to proceed. Halt..");
+            ws_sendAll("Update mining_key to proceed. Halt..");
+            for(;;);
+        }
+        else {
+            Serial.println("[ ] Invalid mining_key. Halt..");
+            ws_sendAll("Invalid mining_key. Halt..");
+            for(;;);
+        }
+    }
+    else {
+        Serial.println("[ ] Updated mining_key..");
+        SetMiningKey(mining_key);
+    }
 }
