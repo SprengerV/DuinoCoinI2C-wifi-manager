@@ -20,10 +20,12 @@ const char* password      = "";         // Change this to your WiFi password
 const char* ducouser      = "JK_TQVM";  // Change this to your Duino-Coin username
 const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom miner name
 const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom local mDNS miner name
+String mining_key         = "None";     // Change this if wallet is protected with mining key
 
 // uncomment for ESP01
 //#define ESP01 true
 #define REPORT_INTERVAL 60000
+#define CHECK_MINING_KEY true
 
 #if ESP8266
 #include <ESP8266WiFi.h> // Include WiFi library
@@ -44,12 +46,12 @@ const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom loca
 #define BLINK_RESET_DEVICE   5
 
 #if ESP8266
-#define MINER "AVR I2C v3.0"
+#define MINER "AVR I2C v3.1"
 #define JOB "AVR"
 #endif
 
 #if ESP32
-#define MINER "AVR I2C v3.0"
+#define MINER "AVR I2C v3.1"
 #define JOB "AVR"
 #endif
 
@@ -157,6 +159,8 @@ void setup() {
   Serial.println();
   
   UpdatePool();
+  if (CHECK_MINING_KEY) UpdateMiningKey();
+  else SetMiningKey(mining_key);
   #ifndef ESP01
     blink(BLINK_SETUP_COMPLETE);
   #endif
