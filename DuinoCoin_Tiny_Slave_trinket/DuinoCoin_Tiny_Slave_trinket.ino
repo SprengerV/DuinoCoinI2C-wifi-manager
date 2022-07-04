@@ -34,6 +34,7 @@
 #include <TinyWireM.h>
 #include "TinyWireS.h"
 #include "sha1.h"
+#include <avr/power.h>
 #ifdef WDT_EN
   #include <avr/wdt.h>
 #endif
@@ -94,6 +95,7 @@ void(* resetFunc) (void) = 0;//declare reset function at address 0
 // --------------------------------------------------------------------- //
 
 void setup() {
+  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
   #ifdef WDT_EN
   wdt_disable();
   #endif
