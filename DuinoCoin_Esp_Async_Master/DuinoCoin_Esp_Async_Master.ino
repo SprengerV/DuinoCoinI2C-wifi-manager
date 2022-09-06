@@ -25,7 +25,8 @@ String mining_key         = "None";     // Change this if wallet is protected wi
 // uncomment for ESP01
 //#define ESP01 true
 #define REPORT_INTERVAL 60000
-#define CHECK_MINING_KEY true
+#define CHECK_MINING_KEY false
+#define REPEATED_WIRE_SEND_COUNT 1      // 1 for AVR, 8 for RP2040
 
 #if ESP8266
 #include <ESP8266WiFi.h> // Include WiFi library
@@ -46,12 +47,12 @@ String mining_key         = "None";     // Change this if wallet is protected wi
 #define BLINK_RESET_DEVICE   5
 
 #if ESP8266
-#define MINER "AVR I2C v3.1"
+#define MINER "AVR I2C v3.3"
 #define JOB "AVR"
 #endif
 
 #if ESP32
-#define MINER "AVR I2C v3.1"
+#define MINER "AVR I2C v3.3"
 #define JOB "AVR"
 #endif
 
@@ -137,7 +138,7 @@ void setup() {
   #ifndef ESP01
     pinMode(LED_BUILTIN, OUTPUT);
   #endif
-  Serial.begin(115200);
+  Serial.begin(500000);
   Serial.print("\nDuino-Coin");
   Serial.println(MINER);
 
