@@ -8,14 +8,25 @@ Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://you
 
 ## Version
 
-DuinoCoinI2C Version 3.1
+DuinoCoinI2C Version 3.3
 
 # Arduino - Slave
 
-All Slaves have the same code and should select the I2C Address automatically if `#define FIND_I2C` is uncommented
+All Slaves have the same code and should select the I2C Address automatically if `#define I2CS_FIND_ADDR` is set to `true`
 
-Arduino shall use `DuinoCoin_Tiny_Slave` sketch
+Arduino shall use [DuinoCoin_RPI_Tiny_Slave](https://github.com/JK-Rolling/DuinoCoinI2C_RPI/tree/main/DuinoCoin_RPI_Tiny_Slave) sketch
 
+# RP2040 - Slave
+
+RP2040 support dual core dual I2C. Dual core is counted as 2 workers
+
+RP2040 shall use [DuinoCoin_RPI_Pico_DualCore](https://github.com/JK-Rolling/DuinoCoinI2C_RPI/tree/main/DuinoCoin_RPI_Pico_DualCore)
+
+# ATTiny - Slave
+
+ATTiny85 is tested to be working. You may try other ATTiny chip (modification maybe needed)
+
+ATTiny shall use [DuinoCoin_ATTiny_Slave](https://github.com/JK-Rolling/DuinoCoinI2C_RPI/tree/main/DuinoCoin_ATTiny_Slave)
 
 ## Library Dependency
 
@@ -24,12 +35,13 @@ Arduino shall use `DuinoCoin_Tiny_Slave` sketch
 
 ## Automatic I2C Address 
 
-The I2C Address on the Arduino is automatically updated when the board starts, if an Address already exists on the I2C bus the code finds another Address to use (with `FIND_I2C` enabled).
-However, depending on vendor, some cloned Arduino have a pretty bad random number generator. It causes it to either wait too long or clashes with each other during address assignment.
+The I2C Address on the Arduino is automatically updated when the board starts, if an Address already exists on the I2C bus the code finds another Address to use (with `I2CS_FIND_ADDR` enabled).
+However, depending on vendor, some cloned Arduino have a pretty bad random number generator. It causes it to either wait too long or clashes with each other during address assignment. So this feature is strongly **NOT RECOMMENDED**
 
-For cloned Nanos, change the value on the define for each Nano:
-```
-#define DEV_INDEX 0
+Instead use manual address assignment, change the value on the define for each device **(RECOMMENDED)**
+```C
+#define DEV_INDEX 0  // increment 1 per device
+#define I2CS_START_ADDRESS 1
 ```
 
 # Esp8266/Esp32 - Master
