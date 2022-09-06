@@ -82,6 +82,11 @@ void Wire_sendln(byte address, String message)
   Wire_send(address, message + "\n");
 }
 
+void Wire_sendCmd(byte address, String message)
+{
+  Wire_send(address, message + '$');
+}
+
 void Wire_send(byte address, String message)
 {
   wire_start();
@@ -91,7 +96,9 @@ void Wire_send(byte address, String message)
   {
     if (wire_runEveryMicro(500)) {
       Wire.beginTransmission(address);
-      Wire.write(message.charAt(i));
+      for (int j=0; j < REPEATED_WIRE_SEND_COUNT; j++) {
+        Wire.write(message.charAt(i));
+      }
       Wire.endTransmission();
       i++;
     }
