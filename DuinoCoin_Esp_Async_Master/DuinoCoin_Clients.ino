@@ -93,6 +93,7 @@ float clientsHashRate[CLIENTS];
 unsigned int clientsDiff[CLIENTS];
 byte clientsBadJob[CLIENTS];
 byte clientsForceReconnect[CLIENTS];
+bool clientsCRC8Status[CLIENTS];
 String poolMOTD;
 unsigned int share_count = 0;
 unsigned int accepted_count = 0;
@@ -102,6 +103,8 @@ unsigned long startTime = millis();
 
 unsigned long clientsConnectTime = 0;
 bool clientsMOTD = true;
+bool clientsQuery = true;
+byte firstClientAddr = 0;
 
 bool clients_connected(byte i)
 {
@@ -116,6 +119,9 @@ bool clients_connect(byte i)
   }
 
   wire_readLine(i);
+
+  clients_query(i);
+  clients_waitAns(i);
 
   Serial.print("[" + String(i) + "]");
   Serial.println("Connecting to Duino-Coin server... " + String(host) + " " + String(port));
@@ -227,6 +233,57 @@ void clients_loop()
   }
 }
 
+void clients_query(byte i)
+{
+  Serial.print("[" + String(i) + "] ");
+  Serial.println("Worker: Query CRC8 status");
+  if (clientsQuery) {
+    firstClientAddr = i;
+    Wire_sendCmd(i+1, "get,crc8");
+  }
+}
+
+void clients_waitAns(byte i)
+{
+  if (clientsQuery)
+  {
+    query_runEvery(0);
+    bool done = false;
+    while (!done)
+    {
+      String responseJob = wire_readLine(i + 1);
+      if (responseJob.length() > 0) {
+        StreamString response;
+        response.print(responseJob);
+        clientsCRC8Status[i] = response.readStringUntil('\n').toInt();
+        Serial.print("[" + String(i) + "] ");
+        Serial.println("CRC8 update status: "+String(clientsCRC8Status[i]));
+        clientsQuery = false; // set this to true if each client have different crc8 config
+        done = true;
+        break;
+      }
+      if (query_runEvery(100)) {
+        // probably legacy client, default to crc8 disable
+        clientsCRC8Status[i] = false;
+        Serial.print("[" + String(i) + "] ");
+        Serial.println("CRC8 fallback status: "+String(clientsCRC8Status[i]));
+        Wire_sendln(i + 1, ",1000");
+        delay(10);
+        wire_readLine(i + 1);
+        clientsQuery = false;
+        done = true;
+      }
+    }
+  }
+  else
+  {
+    // common use case where all slave have same crc8 settings
+    clientsCRC8Status[i] = clientsCRC8Status[firstClientAddr];
+    Serial.print("[" + String(i) + "] ");
+    Serial.println("CRC8 status: "+String(clientsCRC8Status[i]));
+  }
+}
+
 void clients_waitMOTD(byte i)
 {
   if (clients[i].available()) {
@@ -285,7 +342,6 @@ void clients_waitRequestJob(byte i)
     Serial.print("[" + String(i) + "] ");
     Serial.print("Job ");
     Serial.print(clientBuffer);
-    Serial.println("  ping " + String(getJobTime) + " ms");
     //ws_sendAll("[" + String(i) + "] Job "+ clientBuffer + "  ping " + String(getJobTime) + " ms");
 
     // Not a Valid Job -> Request Again
@@ -301,7 +357,19 @@ void clients_waitRequestJob(byte i)
     clientsDiff[i] = diff;
 
     clientsElapsedTime[i] = millis();
-    wire_sendJob(i + 1, hash, job, diff);
+    if (clientsCRC8Status[i])
+    {
+      String data = hash + SEP_TOKEN + job + SEP_TOKEN + String(diff) + SEP_TOKEN;
+      uint8_t crc8 = calc_crc8(data);
+      data += String(crc8);
+      Serial.print(","+String(crc8));
+      Wire_sendln(i+1, data);
+    }
+    else
+    {
+      wire_sendJob(i + 1, hash, job, diff);
+    }
+    Serial.println("  ping " + String(getJobTime) + " ms");
     clients_state(i, DUINO_STATE_JOB_DONE_SEND);
   }
 }
@@ -319,7 +387,25 @@ void clients_sendJobDone(byte i)
 
     int job = response.readStringUntil(',').toInt();
     int time = response.readStringUntil(',').toInt();
-    String id = response.readStringUntil('\n');
+    String id;
+    if (clientsCRC8Status[i])
+    {
+      id = response.readStringUntil(',');
+      uint8_t received_crc8 = response.readStringUntil('\n').toInt();
+      String data = String(job) + SEP_TOKEN + String(time) + SEP_TOKEN + id + SEP_TOKEN;
+      uint8_t expected_crc8 = calc_crc8(data);
+
+      if (received_crc8 != expected_crc8)
+      {
+        // client reply corrupted
+        // should resend job to client
+        // don't care for now
+      }
+    }
+    else
+    {
+      id = response.readStringUntil('\n');
+    }
     float HashRate = job / (time * .000001f);
     clientsHashRate[i] = HashRate;
 
@@ -620,4 +706,39 @@ float calc_avg_hashrate()
     }
     if (client_count == 0) return 0;
     else return hashrate_sum / float(client_count);
+}
+
+// https://stackoverflow.com/questions/51731313/cross-platform-crc8-function-c-and-python-parity-check
+uint8_t crc8( uint8_t *addr, uint8_t len) {
+      uint8_t crc=0;
+      for (uint8_t i=0; i<len;i++) {
+         uint8_t inbyte = addr[i];
+         for (uint8_t j=0;j<8;j++) {
+             uint8_t mix = (crc ^ inbyte) & 0x01;
+             crc >>= 1;
+             if (mix) 
+                crc ^= 0x8C;
+         inbyte >>= 1;
+      }
+    }
+   return crc;
+}
+
+uint8_t calc_crc8( String msg ) {
+    int msg_len = msg.length() + 1;
+    char char_array[msg_len];
+    msg.toCharArray(char_array, msg_len);
+    return crc8((uint8_t *)char_array,msg.length());
+}
+
+boolean query_runEvery(unsigned long interval)
+{
+  static unsigned long previousMillis = 0;
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval)
+  {
+    previousMillis = currentMillis;
+    return true;
+  }
+  return false;
 }
