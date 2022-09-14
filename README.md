@@ -22,9 +22,13 @@ RP2040 support dual core dual I2C. Dual core is counted as 2 workers
 
 RP2040 shall use [DuinoCoin_RPI_Pico_DualCore](https://github.com/JK-Rolling/DuinoCoinI2C_RPI/tree/main/DuinoCoin_RPI_Pico_DualCore)
 
-Set the value below to 8 in the RP2040 sketch
-```
+Set the value below to 8 and false in the ESP and RP2040 sketch
+```C
+// ESP
 #define REPEATED_WIRE_SEND_COUNT 8      // 1 for AVR, 8 for RP2040
+
+// RP2040
+#define CRC8_EN false
 ```
 
 # ATTiny - Slave
