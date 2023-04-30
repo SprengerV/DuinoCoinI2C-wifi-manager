@@ -6,6 +6,8 @@ Using the I2C communication to connect all the boards and make a scalable commun
 
 Visit youtube for video of [How to Make the DuinoCoinI2C Mining Rig](https://youtu.be/ErpdIaZk9EI)
 
+Watch [Programming ESP-01 video](https://youtu.be/M6N-3RDhHj0)
+
 ## Version
 
 DuinoCoinI2C Version 3.3
