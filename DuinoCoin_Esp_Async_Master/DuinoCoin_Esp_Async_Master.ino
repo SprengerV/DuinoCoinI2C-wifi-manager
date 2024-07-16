@@ -153,8 +153,8 @@ void SetupWifi() {
 
   bool res = wm.autoConnect(mDNSRigIdentifier);
 
-  strcpy(DUCO_USER, ducouser.getValue());
-  strcpy(MINING_KEY, miningkey.getValue());
+  strcpy(DUCO_USER, ducouser->getValue());
+  strcpy(MINING_KEY, miningkey->getValue());
 
   // Save configuration
   if (shouldSave) {
