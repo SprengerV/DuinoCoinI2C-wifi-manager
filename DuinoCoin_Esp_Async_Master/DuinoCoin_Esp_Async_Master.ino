@@ -151,6 +151,48 @@ void SetupWifi() {
   strcpy(DUCO_USER, ducouser.getValue());
   strcpy(MINING_KEY, miningkey.getValue());
 
+  // Save configuration
+  if (shouldSave) {
+    Serial.println("Saving configuration...");
+
+    // ArduinoJaon 6
+    jsonObject json;
+    json["DUCO_USER"] = DUCO_USER;
+    json["MINING_KEY"] = MINING_KEY;
+    serializeJson(json, Serial);
+
+    File configFile = SPIFFS.open("/config.json", "w");
+    if (!configFile) {
+      Serial.println("Failed to open config file for writing!")
+    }
+
+    serializeJson(json, configFile);
+    configFile.close();
+    Serial.println("Config file saved!");
+
+    if (!res) {
+      Serial.println("Failed to connect!");
+
+      ESP.restart();
+    }
+    else {
+      Serial.println("\nSuccessfully connected to WiFi!");
+      Serial.println("Local IP address: " + WiFi.localIP().toString());
+      Serial.println("Rig name: " + String(mDNSRigIdentifier));
+    }
+
+    int wait_passes = 0
+    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+      delay(1000);
+      Serial.println(".");
+      if (++wait_passes > 30) {
+        wm.resetSettings();
+        ESP.restart();
+        wait_passes = 0;
+      }
+    }
+  }
+
   Serial.println("\nConnected to WiFi!");
   Serial.println("Local IP address: " + WiFi.localIP().toString());
 }
