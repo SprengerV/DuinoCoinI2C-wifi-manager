@@ -15,13 +15,6 @@ void Wire_send(byte address, String message);
 String wire_readLine(int address);
 boolean wire_runEvery(unsigned long interval);
 
-const char* ssid          = "";         // Change this to your WiFi SSID
-const char* password      = "";         // Change this to your WiFi password
-const char* ducouser      = "JK_TQVM";  // Change this to your Duino-Coin username
-const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom miner name
-const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom local mDNS miner name
-String mining_key         = "None";     // Change this if wallet is protected with mining key
-
 // uncomment for ESP01
 //#define ESP01 true
 #define REPORT_INTERVAL 60000
@@ -40,6 +33,7 @@ String mining_key         = "None";     // Change this if wallet is protected wi
 
 #include <ArduinoOTA.h>
 #include <StreamString.h>
+#include <WiFiManager.h>
 
 #define BLINK_SHARE_FOUND    1
 #define BLINK_SETUP_COMPLETE 2
@@ -56,24 +50,34 @@ String mining_key         = "None";     // Change this if wallet is protected wi
 #define JOB "AVR"
 #endif
 
+const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom miner name
+const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom local mDNS miner name
+char DUCO_USER[40];
+char MINING_KEY[40];
+WiFiManagerParameter* ducouser;
+WiFiManagerParameter* miningkey;
+
 void handleSystemEvents(void) {
   ArduinoOTA.handle();
   yield();
 }
 
 void SetupWifi() {
-  Serial.println("Connecting to: " + String(ssid));
-  WiFi.mode(WIFI_STA); // Setup ESP in client mode
+  // Serial.println("Connecting to: " + String(ssid));
+  // WiFi.mode(WIFI_STA); // Setup ESP in client mode
 
-  if (ssid == "")
-    WiFi.begin();
-  else
-    WiFi.begin(ssid, password);
+  // if (ssid == "")
+  //   WiFi.begin();
+  // else
+  //   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.print(".");
+  // }
+
+  WiFi.mode(WIFI_STA);
+
 
   Serial.println("\nConnected to WiFi!");
   Serial.println("Local IP address: " + WiFi.localIP().toString());
@@ -161,7 +165,7 @@ void setup() {
   
   UpdatePool();
   if (CHECK_MINING_KEY) UpdateMiningKey();
-  else SetMiningKey(mining_key);
+  else SetMiningKey(MINING_KEY);
   #ifndef ESP01
     blink(BLINK_SETUP_COMPLETE);
   #endif

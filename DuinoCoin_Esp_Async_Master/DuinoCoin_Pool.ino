@@ -64,7 +64,7 @@ String httpGetString(String URL)
 
 void UpdateMiningKey()
 {
-    String url = String(urlMiningKeyStatus) + "?u=" + String(ducouser) + "&k=" + mining_key;
+    String url = String(urlMiningKeyStatus) + "?u=" + String(DUCO_USER) + "&k=" + MINING_KEY;
     String input = httpGetString(url);
     if (input == "") return;
 
@@ -88,7 +88,7 @@ void CheckMiningKey(String input)
         SetMiningKey("None");
     }
     else if (!success) {
-        if (mining_key == "None") {
+        if (MINING_KEY == "None") {
             Serial.println("[ ] Update mining_key to proceed. Halt..");
             ws_sendAll("Update mining_key to proceed. Halt..");
             for(;;);
@@ -101,6 +101,6 @@ void CheckMiningKey(String input)
     }
     else {
         Serial.println("[ ] Updated mining_key..");
-        SetMiningKey(mining_key);
+        SetMiningKey(MINING_KEY);
     }
 }
