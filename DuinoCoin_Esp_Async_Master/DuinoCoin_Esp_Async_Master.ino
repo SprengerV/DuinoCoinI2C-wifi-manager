@@ -35,6 +35,11 @@ boolean wire_runEvery(unsigned long interval);
 #include <StreamString.h>
 #include <WiFiManager.h>
 
+#include <DuinoCoin_Wire.h>
+#include <DuinoCoin_Pool.h>
+#include <DuinoCoin_Clients.h>
+#include <DuinoCoin_AsyncWebServer.h>
+
 #define BLINK_SHARE_FOUND    1
 #define BLINK_SETUP_COMPLETE 2
 #define BLINK_CLIENT_CONNECT 3
