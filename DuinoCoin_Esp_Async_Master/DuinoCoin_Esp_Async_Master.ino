@@ -78,6 +78,61 @@ void SetupWifi() {
 
   WiFi.mode(WIFI_STA);
 
+  #if defined(ESP8266)
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  #else
+    WiFi.setSleep(false);
+  #endif
+
+  if (SPIFFS.begin()) {
+    Serial.println("Mounting file system...");
+
+    if (SPIFFS.exists("/config.json")) {
+      Serial.println("Reading config file...");
+
+      File cf = SPIFFS.open("/config.json", "r")
+      if (cf) {
+        Serial.println("Opened config file!");
+
+        // Allocate a buffer to store contents of config.json
+        size_t sz = cf.size();
+        stf::unique_ptr<char[]> buf(new char[sz]);
+
+        // AurduinoJson 6
+        DynamicJsonDocument jBuff(sz);
+        DeserializationError err = deserializeJson(jBuff, buff.get());
+        JsonObject json = jBuff.as<JsonObject>();
+        Serial.println(json);
+
+        if (!err) {
+          Serial.println("\nParsed JSON!");
+          strcpy(DUCO_USER, json["DUCO_USER"]);
+          strcpy(MINING_KEY, json["MINING_KEY"]);
+        }
+        else {
+          Serial.println("Failed to load JSON!");
+        }
+      }
+    }
+  }
+  else {
+    Serial.println("Failed to mount file system!");
+  }
+  // Local initialization of WiFIManager
+  WiFiManager wm;
+
+  // Uncomment to wipe settings
+  wm.resetSettings();
+
+  // Uncomment for debugging
+  wm.setDebugOutput(true);
+  wm.debugPlatformInfo();
+
+  // Add custom parameters
+  ducouser = new WiFiManager("User", "Duco User", DUCO_USER, 40);
+  miningkey = new WiFiManager("Key", "Mining Key", MINING_KEY, 40, "type=\"password\"");
+  wm.addParameter(ducouser);
+  wm.addParameter(miningkey);
 
   Serial.println("\nConnected to WiFi!");
   Serial.println("Local IP address: " + WiFi.localIP().toString());
