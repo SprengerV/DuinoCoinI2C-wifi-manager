@@ -54,12 +54,18 @@ const char* rigIdentifier = "AVR-I2C";  // Change this if you want a custom mine
 const char* mDNSRigIdentifier = "esp";  // Change this if you want a custom local mDNS miner name
 char DUCO_USER[40];
 char MINING_KEY[40];
+bool shouldSave = false;
 WiFiManagerParameter* ducouser;
 WiFiManagerParameter* miningkey;
 
 void handleSystemEvents(void) {
   ArduinoOTA.handle();
   yield();
+}
+
+void saveConfigCallback () {
+  Serilal.println("Should save config.");
+  shouldSave = true;
 }
 
 void SetupWifi() {
@@ -133,6 +139,17 @@ void SetupWifi() {
   miningkey = new WiFiManager("Key", "Mining Key", MINING_KEY, 40, "type=\"password\"");
   wm.addParameter(ducouser);
   wm.addParameter(miningkey);
+
+  wm.setSaveConfigCallback(saveConfigCallback);
+  // Set custom IP for AP
+  wm.setAPStaticIPConfig(IPAddress(10,0,0,1), IPAddress(10,0,0,1), IPAddress(255,255,255,0));
+  // Set a timeout for connection
+  wm.setTimeout(129);
+
+  bool res = wm.autoConnect(mDNSRigIdentifier);
+
+  strcpy(DUCO_USER, ducouser.getValue());
+  strcpy(MINING_KEY, miningkey.getValue());
 
   Serial.println("\nConnected to WiFi!");
   Serial.println("Local IP address: " + WiFi.localIP().toString());
